@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>图片上传</title>
+    <style>
+      /*#uploadPic{
+          width: 10px;
+          height: 10px;
+      }*/
+    </style>
+</head>
+<body>
+    <div class="form-group">
+        <label>File input:</label>
+        <input type="file" name="file" id="file">
+        <button id="submit" onclick="submit()" style="display: none">提交</button>
+        <p id="result"></p>
+        <img id="img" src=""/>
+    </div>
+    <button id="upload" class="btn btn-default">显示</button>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+  <script>
+    var img_url;
+    var sceneId;
+    function GetQueryString(name) {//用于解析url中的参数
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        var r = decodeURI(window.location.search.substr(1)).match(reg);
+        if (r != null)return unescape(r[2]);
+        return null;
+    }  
+    function submit(){
+      var sceneId1 = GetQueryString("sceneId1");
+      var sceneId2 = GetQueryString("sceneId2");
+      var longitude = GetQueryString("longitude");
+      var latitude = GetQueryString("latitude");
+      sceneId1 = decodeURIComponent(sceneId1);
+      sceneId2 = decodeURIComponent(sceneId2);
+      longitude = decodeURIComponent(longitude);
+      latitude = decodeURIComponent(latitude);
+      var sceneId = GetQueryString("sceneId");
+      sceneId = decodeURIComponent(sceneId);
+      if(sceneId.toString()==="1")//如果处于初始化阶段
+      {
+        alert("初始化阶段");
+        sceneId = 1;
+        var params = {img_url:img_url,sceneId:sceneId};
+        $.ajax({
+                url:location.href.substr(0,location.href.indexOf("?"))+'/imgToDB',
+                type:'POST',
+                data:params,
+                dataType:'json',
+                success:function(data){
+                  if(data.result=="fail"){
+                    alert("进入场景展示界面失败！");
+                  }
+                  else
+                  {
+                    alert("进入场景展示界面成功！");
+                    window.location.href = location.href.substr(0,location.href.indexOf("/upload"))+'/users?img_url='+img_url+'&sceneId='+sceneId;
+                  }
+                }
+              })
+      }
+      else{//如果处于扩展阶段
+        var params = {sceneId1:sceneId1,sceneId2:sceneId2,longitude:longitude,latitude:latitude};
+        alert("扩展阶段");
+        $.ajax({
+          url:location.href.substr(0,location.href.indexOf('?'))+'/addMarker',
+          type:'POST',
+          data:params,
+          dataType:'json',
+          success:function(data){
+            if(data.result=="fail")
+            {
+              alert("跳转标记添加失败！");
+            }
+            else{
+              alert("跳转标记添加成功！");
+              var params = {img_url:img_url,sceneId:sceneId2};
+              $.ajax({
+                      url:location.href.substr(0,location.href.indexOf('?'))+'/imgToDB',
+                      type:'POST',
+                      data:params,
+                      dataType:'json',
+                      success:function(data){
+                        if(data.result=="fail"){
+                          alert("进入场景展示界面失败！");
+                        }
+                        else
+                        {
+                          alert("进入场景展示界面成功！");
+                          window.location.href = location.href.substr(0,location.href.indexOf("/upload"))+'/users?img_url='+img_url+'&sceneId='+sceneId2+'&sceneId2='+sceneId1;
+                        }
+                      }
+                    })
+            }
+          }
+        })
+      }
+      
+    }
+    //上传图片的业务逻辑函数
+    function uploadFile(){
+      //上传图片的input
+      var file = document.getElementById("file")
+      //因为准备用post提交，又因为图片的内容比较大，所以我们选择使用formdata来承载数据
+      //创建formdata对象
+      var formData = new FormData();
+      //给formdata对象中放入数据(键值对的方式)
+      
+      formData.append('file',file.files[0]);
+      //提交请求
+      $.ajax({
+        url: window.location.href,//请求路径
+        type: 'POST',
+        data: formData,
+        contentType: false,//为了让浏览器根据传入的formdata来判断contentType
+        processData: false,//同上
+        success: function(data){
+          if(200 === data.code) {
+            $('#result').html("上传成功！");
+            $('#img').attr('src','/images/'+data.data);
+            document.getElementById('submit').style.display="";
+            img_url = data.data;
+            
+          } else {
+            $('#result').html("上传失败！");
+          }
+          console.log(2)
+        },
+        error: function(){
+          $("#result").html("与服务器通信发生错误");
+        }
+      });
+      console.log(1)
+    }
+    //给按钮添加点击事件
+    function postPage() {
+        //上传按钮
+        var uploada = document.getElementById('upload');
+        uploada.addEventListener("click",function () {
+          uploadFile();
+        },false);
+    }
+    window.onload = function () {
+      postPage();
+    }
+</script>
+</body>
+</html>

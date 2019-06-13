@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>360全景图展示</title>
+
+    <link rel="stylesheet" type="text/css" href="/stylesheets/photoSphereViewer.min.css" />
+    <link rel="stylesheet" media="screen" href="/stylesheets/stylel.css">
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.1.0/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/normalize.css" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/default.css">
+    <link rel='stylesheet prefetch' href='/stylesheets/font-awesome.min.css'>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/styles.css">
+
+    <script src="/javascripts/three.min.js"></script>
+    <script src="/javascripts/D.min.js"></script>
+    <script src="/javascripts/doT.min.js"></script>
+    <script src="/javascripts/uevent.min.js"></script>
+    <script src="/javascripts/photo-sphere-viewer.min.js"></script>
+    <script src="/javascripts/jquery-1.12.3.min.js"></script>
+    <script src="/javascripts/FirstPersonControls.js"></script>
+    <script src="https://cdn.staticfile.org/popper.js/1.12.5/umd/popper.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <script src="/javascripts/stats.js"></script>
+    <script src="/javascripts/dat.gui.js"></script>
+
+</head>
+<body>
+<style>
+    body {
+        margin:0;
+        padding:0;
+
+    }
+    #heading{
+        width:100%;
+        height:50px;
+        background-color: #bce8f1;
+    }
+    #content_menu{
+        width:13%;
+        height:700px;
+        background-color: transparent;
+        float:left;
+    }
+    #content_body{
+        width:87%;
+        height:700px;
+        float: right;
+    }
+    /*#viewer {
+        position:relative;
+        width:100%;
+        height:100%;
+        z-index:50;
+
+    }*/
+    /*#logout{
+        position:fixed;
+        top:-50px;
+
+        z-index:100;
+    }*/
+    #webGL{
+        position:fixed;
+        width:100vh;
+        height:100vh;
+        z-index: 80;
+    }
+    .leftH2 {
+        width: 140px;
+        height: 30px;
+        border-radius: 4px;
+        line-height: 30px;
+        text-align: center;
+        color: #fff;
+        background: #60b3e7;
+        margin: 5px auto;
+        font-size:30px;
+        font-family: inherit;
+        font-weight: 500;
+        display: block;
+        margin-block-start: 0.83em;
+        margin-block-end: 0.83em;
+        margin-inline-start: 0px;
+        margin-inline-end: 0px;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        box-sizing: border-box;
+        box-shadow: 4px 4px rgba(212,212,212,0.7);
+    }
+    .list {
+        margin: 0 12px;
+        font-weight: bold;
+        list-style: none;
+    }
+    .mask {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background-color: #000;
+        opacity: .3;
+    }
+    .anjian {
+        width:100%;
+        height:30px;
+        line-height:24px;
+        border: 1px solid #7ba92c;
+        color:#FFFFFF;
+        background: radial-gradient(#70c2f4,#035384);
+        border-radius: 5px;
+        cursor: pointer;
+        left: 0;
+        list-style: none;
+        /*padding-left:24px;*/
+    }
+    #myModal{
+        position:fixed;
+        left:0;
+        right:0;
+        top:0;
+        bottom:0;
+        z-index:99999;
+    }
+
+</style>
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">
+                </h4>
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-hidden="true">×
+                </button>
+            </div>
+            <div class="modal-body">
+                <section class="model-11">
+                    <div class="checkbox">
+                        <input type="checkbox"  id="checkbox"/>
+                        <label></label>
+                    </div></section>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<!--添加设备的模态框-->
+<div class="modal fade" tabindex="-1" role="dialog" id="addDeviceModal">
+    <!--.modal:指定为模态框      fade:淡入淡出效果     tabindex="-1":不受tab键控制    role="dialog":指定模态框为对话框-->
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <!--button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button-->
+                <h4 class="modal-title" style="font-weight: bold;">添加设备</h4>
+            </div>
+            <div class="modal-body" id="deviceInfo">
+                <table class="table table-striped table-hover">
+                    <tbody>
+                    <tr>
+                        <td class="attName">设备名称:</td>
+                        <td>
+                            <input type="text" name="name0" id="name0" >
+                            <span>*</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="attName">经度:</td>
+                        <td>
+                            <input type="text" name="name1" id="name1" >
+                            <span>*</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="attName">纬度:</td>
+                        <td>
+                            <input type="text" name="name2" id="name2" >
+                            <span>*</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="attName">设备ID:</td>
+                        <td>
+                            <input type="text" name="name3" id="name3" >
+                            <span>*</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="attName">设备厂商:</td>
+                        <td>
+                            <input type="text" name="name4" id="name4" >
+                            <span>*</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="attName">设备类型:</td>
+                        <td>
+                            <input type="text" name="name5" id="name5" >
+                            <span>*</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="attName">设备型号:</td>
+                        <td>
+                            <input type="text" name="name6" id="name6" >
+                            <span>*</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="attName">设备选择:</td>
+                        <td>
+                            <select class="form-control" id="deviceType">
+                                <option>台灯</option>
+                                <option>办公室灯</option>
+                                <option>窗帘</option>
+                                <option>插座</option>
+                                <option>PM2.5</option>
+                            </select>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal" id="modalClose" onclick="
+                    Close()">关闭</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="modalConfirm" onclick="Finish()">确定</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<div id="webGL" style="display: none"></div>
+<!--div class="container"-->
+<div id="heading">
+    <em>欢迎来到实景展示界面</em>
+</div>
+<div id="content_body">
+    <div id="viewer"></div>
+</div>
+<div id="content_menu">
+    <h1 class="leftH2">
+        <span>功能列表</span>
+    </h1>
+    <nav>
+        <ul class="list">
+            <li><input id="logout" type="button" data-toggle="modal" value="退出" class="anjian" onclick="home()"/></li>
+            <li><input id="addDevice" type="button" data-toggle="modal" value="添加设备" class="anjian" onclick="addDevice()"/></li>
+            <li><input id="deleteDevice" type="button" data-toggle="modal" value="删除设备" class="anjian" onclick="deleteDevice()"/></li>
+            <li><input id="addForward" type="button" data-toggle="modal" value="添加前进按钮" class="anjian" onclick="addForward()"/></li>
+            <li><input id="addBack" type="button" data-toggle="modal" value="添加后退按钮" class="anjian" onclick="addBack()"/></li>
+        </ul>
+    </nav>
+
+</div>
+
+<!--/div-->
+<script type="text/template" id="logoutin">
+    <link rel="stylesheet" media="screen" href="/stylesheets/stylel.css">
+
+</script>
+<script type="text/javascript">
+
+    // once everything is loaded, we run our Three.js stuff.
+    function init() {
+
+
+        // create a scene, that will hold all our elements such as objects, cameras and lights.
+        var scene = new THREE.Scene();
+
+        // create a camera, which defines where we're looking at.
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // create a render and set the size
+        var webGLRenderer = new THREE.WebGLRenderer({alpha:true});
+        webGLRenderer.setClearColor(0x000000,0);
+        webGLRenderer.setSize(window.innerWidth, window.innerHeight);
+
+        // position and point the camera to the center of the scene
+        camera.position.x = 20;
+        camera.position.y = 0;
+        camera.position.z = 150;
+
+        // add the output of the renderer to the html element
+        document.getElementById("webGL").appendChild(webGLRenderer.domElement);
+
+        var controls = new function(){
+            this.rotationSpeed = 0.001;
+        }
+
+        createSprites();
+        render();
+
+        var group;
+
+        function createSprites() {
+
+            group = new THREE.Object3D();
+            var range = 200;
+            for (var i = 0; i < 400; i++) {
+                group.add(createSprite(10, false, 0.6, 0xffffff, i % 5, range));
+            }
+            scene.add(group);
+        }
+
+
+        function getTexture() {
+            var texture = new THREE.ImageUtils.loadTexture("/images/sprite-sheet.png");
+            return texture;
+        }
+
+
+        function createSprite(size, transparent, opacity, color, spriteNumber, range) {
+
+
+            var spriteMaterial = new THREE.SpriteMaterial({
+                    opacity: opacity,
+                    color: color,
+                    transparent: transparent,
+                    map: getTexture()
+                }
+            );
+
+            // we have 1 row, with five sprites
+            spriteMaterial.map.offset = new THREE.Vector2(0.2 * spriteNumber, 0);
+            spriteMaterial.map.repeat = new THREE.Vector2(1 / 5, 1);
+            spriteMaterial.depthTest = false;
+
+            spriteMaterial.blending = THREE.AdditiveBlending;
+
+            var sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(size, size, size);
+            sprite.position.set(Math.random() * range - range / 2, Math.random() * range - range / 2, Math.random() * range - range / 2);
+            sprite.velocityX = 5;
+
+
+            return sprite;
+        }
+
+
+        var step = 0;
+
+        function render() {
+
+            group.rotation.x = step+=controls.rotationSpeed;
+            group.rotation.y = step+=controls.rotationSpeed;
+            group.rotation.z = step+=controls.rotationSpeed;
+            requestAnimationFrame(render);
+            webGLRenderer.render(scene, camera);
+        }
+
+
+
+    }
+    window.onload = init;
+</script>
+<script type="text/javascript">//处理websocket长连接
+  
+    var websocket = new WebSocket("ws://127.0.0.1:3300/wsServer.js"/*"http://47.105.120.203:30080/api/v1/devicraccess/websocket"*/);
+
+    websocket.onopen = function () {
+
+        console.log('websocket open');
+
+    }
+
+    websocket.onclose = function () {
+
+        console.log('websocket close');
+
+    }
+
+    websocket.onmessage = function (e) {//当接收到服务端发来的数据时
+        if(e.data==="1")
+        {
+            document.getElementById('webGL').style.display="";
+            alert("数据异常，按ESC退出警报");
+        }
+    }
+</script>
+<script>
+    $(document).keyup(function(event){//检测是否按下ESC，用于退出警报
+        if(event.keyCode===27)
+        {
+            document.getElementById('webGL').style.display="none";
+        }
+    })
+    
+    function GetQueryString(name) {//用于解析url中的参数
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        var r = decodeURI(window.location.search.substr(1)).match(reg);
+        if (r != null)return unescape(r[2]);
+        return null;
+    }  
+    function Close(){//添加设备的模态框的关闭
+        $('#addDeviceModal').modal('hide');
+        addMode=false;
+    }
+    function Finish() {//用于在全景图中添加设备
+        var longitude=$('#name1').val().substr(0,5);//设备所在经度
+        var latitude=$('#name2').val().substr(0,5);//设备所在纬度
+        var deviceName=$('#name0').val();//设备名
+        var deviceId=$('#name3').val();//设备ID
+        var Type=$('#deviceType option:selected').text();//设备种类
+        var manufacture=$('#name4').val();//设备厂商
+        var deviceType=$('#name5').val();//设备类型
+        var model=$("#name6").val();//设备型号
+        var imageLoc1;//设备icon地址（开启时）
+        var imageLoc2;//设备icon地址（关闭时）
+        var typeId;//设备种类号
+        if(Type==='台灯'){
+            imageLoc1='on.png';
+            imageLoc2='off.png';
+            typeId=1;
+        }
+        else if(Type==='办公室灯'){
+            imageLoc1='lamp-on.png';
+            imageLoc2='lamp-off.png';
+            typeId=1;
+
+        }
+        else if(Type==='插座'){
+            imageLoc1='Outlet-open.png';
+            imageLoc2='Outlet-close.png';
+            typeId=1;
+        }
+        else if(Type==='窗帘'){
+            imageLoc1='curtainOpen.png';
+            imageLoc2='curtainClose.png';
+            typeId=2;
+        }
+        else if(Type==='PM2.5')
+        {
+            imageLoc1='pm2.5.png';
+            imageLoc2='pm2.5.png';
+            typeId=3;
+        }
+        var params={deviceId:deviceId,deviceName:deviceName,deviceType:deviceType,longitude:longitude,latitude:latitude,manufacture:manufacture,model:model,imageLoc1:imageLoc1,imageLoc2:imageLoc2,sceneId: sceneId,typeId:typeId}
+        alert(deviceId+" "+deviceName+" "+Type+" "+manufacture+" "+model+" "+typeId+" "+longitude+" "+latitude+" "+imageLoc1+" "+imageLoc2+" "+sceneId)
+        M.set(deviceId,params);
+        $.ajax({
+            type:"POST",
+            url:window.location.href.substr(0,location.href.indexOf('?'))+'/addDevice',
+            data:params,
+            dataType:'json',
+            success:function(data)
+            {
+                if(data.result=="fail"){
+                    alert("设备添加失败！");
+                }
+                else
+                {
+                    alert("设备添加成功！");
+                }
+            }
+        });
+        viewer.addMarker(
+            {
+                id:deviceId,
+                image:'/images/'+imageLoc2,
+                width:50,
+                height:50,
+                longitude: longitude,
+                latitude: latitude,
+                anchor:'bottom center',
+                tooltip:{
+                    content:deviceName,
+                    fontsize:'xx-large',
+                },
+            }
+        );
+        addMode=false;
+    }
+    function home(){//退出返回主页
+        window.location.href=location.href.substr(0,location.href.indexOf("/users"))+'/out';
+    }
+    function addDevice(){//将当前状态设置为设备添加
+        alert("在全景图中点击添加设备");
+        addMode=true;
+    }
+    function deleteDevice (){//将当前状态设置为设备删除
+        alert("在全景图中点击需要删除的设备")
+        deleteMode=true;
+    }
+    function addForward(){
+        alert("在全景图中点击添加前进按钮");
+        addFMode=true;
+    }
+    function addBack(){
+        alert("在全景图中点击添加后退按钮");
+        addBMode=true;
+    }
+    var M = new Map();//用于将设备ID与设备的信息进行映射
+    var sceneId=decodeURIComponent(GetQueryString("sceneId"));//用于标记当前所处的场景
+    var sceneId2;
+    var deleteMode=false;//是否处于删除设备的状态
+    var addMode=false;//是否处于添加设备的状态
+    var addFMode=false;//是否处于添加前进按钮的状态
+    var addBMode=false;//是否处于添加后退按钮的状态
+    //用于查看设备信息
+    function checkInfo(deviceId,Name,Id,type,manufacture,model){
+        params = {deviceId:deviceId,type:type,manufacture:manufacture,model:model};
+        $.ajax({
+            type: "POST",
+            url: window.location.href.substr(0,location.href.indexOf('?')) + '/checkInfo',
+            data: params,
+            dataType: 'json',
+            success: function (data) {
+                alert("当前的PM2.5为："+data.value);
+            }
+        });
+    }
+    //用于查看并控制设备
+    function show(deviceId,Name,Id,type,manufacture,model){
+        document.getElementById("myModalLabel").innerHTML = Name;
+        var checkbox =  document.getElementById('checkbox');
+        //先判断当前设备的状态
+        if(Id==2||Id==1)
+        {
+            params={deviceId:deviceId,type:type,manufacture:manufacture,model:model};
+            $.ajax({
+                type:"POST",
+                url:window.location.href.substr(0,location.href.indexOf('?')) + '/checkStatus',
+                data:params,
+                dataType:'json',
+                success:function(data){
+                    if(data.value==='true')
+                    {
+                        checkbox.checked=true;
+                        control(deviceId,Name,Id,type,manufacture,model);
+                    }
+                    else
+                    {
+                        checkbox.checked=false;
+                        control(deviceId,Name,Id,type,manufacture,model);
+                    }
+                }
+            })
+        }
+        else if(Id==3)
+        {
+            checkInfo(deviceId,Name,Id,type,manufacture,model)
+        }
+        //先获得设备的基本数据
+
+    }
+    function control(deviceId,Name,Id,type,manufacture,model)//用于控制设备
+    {
+        params = {deviceId:deviceId,type:type,manufacture:manufacture,model:model};
+        $.ajax({
+            type:"POST",
+            url:window.location.href.substr(0,location.href.indexOf('?'))+'/check',
+            data:params,
+            dataType:'json',
+            success:function(data){
+                checkbox.onclick=function(){
+                    if(checkbox.checked)
+                    {
+                        if(Id===1)
+                        {
+                            params = {deviceId:deviceId,value:"true",Endpoint:data.Endpoint,shortAddress:data.shortAddress,requestId:Id,serviceName:data.serviceName,methodName:data.methodName,statusValue:"true"};
+                        }
+                        else if(Id===2)
+                        {
+                            params = {deviceId:deviceId,value:"true",Endpoint:data.Endpoint,shortAddress:data.shortAddress,requestId:Id,serviceName:data.serviceName,methodName:data.methodName,statusValue:"1"};
+                        }
+
+                        //再对设备进行控制请求
+                        $.ajax({
+                            type:"POST",
+                            url:window.location.href.substr(0,location.href.indexOf('?'))+'/control',
+                            data:params,
+                            datatype:'json',
+                            success:function(data){
+                                if(data.result=="false")
+                                {
+                                    alert(Name+"打开失败！")
+                                }
+                                else
+                                {
+                                    alert(Name+"打开！")
+                                    viewer.getMarker(deviceId).update({
+                                        image:'/images/'+M.get(deviceId).imageLoc1,
+                                    });
+                                }
+                            }
+                        })
+                    }
+                    else
+                    {
+                        if(Id===1)
+                        {
+                            params = {deviceId:deviceId,value:"false",Endpoint:data.Endpoint,shortAddress:data.shortAddress,requestId:Id,serviceName:data.serviceName,methodName:data.methodName,statusValue:"false"};
+                        }
+                        else if(Id===2)
+                        {
+                            params = {deviceId:deviceId,value:"false",Endpoint:data.Endpoint,shortAddress:data.shortAddress,requestId:Id,serviceName:data.serviceName,methodName:data.methodName,statusValue:"0"};
+                        }
+                        $.ajax({
+                            type:"POST",
+                            url:window.location.href.substr(0,location.href.indexOf('?'))+'/control',
+                            data:params,
+                            datatype:'json',
+                            success:function(data){
+                                if(data.result=="false")
+                                {
+                                    alert(Name+"关闭失败！")
+                                }
+                                else
+                                {
+                                    alert(Name+"关闭！")
+                                    viewer.getMarker(deviceId).update({
+                                        image:'/images/'+M.get(deviceId).imageLoc2,
+                                    });
+                                }
+                            }
+                        })
+                    }
+                }
+            }
+        })
+
+        $('#myModal').modal('toggle')
+    }
+    //构建全景图框架
+    var div = document.getElementById('viewer');
+    var img_url = GetQueryString("img_url");
+    img_url = decodeURIComponent(img_url);
+    var viewer = new PhotoSphereViewer({
+        panorama: '/images/'+img_url,
+        container: div,
+        caption:'物联网智能家居',
+        touchmove_two_fingers:true,
+        default_fov:179,
+        lang:{
+            autorotate: 'Automatic rotation',
+            zoom: 'Zoom',
+            zoomOut: 'Zoom out',
+            zoomIn: 'Zoom in',
+            download: 'Download',
+            fullscreen: 'Fullscreen',
+            markers: 'Markers',
+            gyroscope: 'Gyroscope',
+            stereo: 'Stereo view',
+            stereoNotification: 'Click anywhere to exit stereo view.',
+            pleaseRotate: ['Please rotate your device', '(or tap to continue)'],
+            twoFingers: ['Use two fingers to navigate']
+        },
+        navbar:   [
+            'autorotate',
+            'zoom',
+            'markers',
+            {
+                id: 'my-button',
+                title: 'Hello world',
+                className: 'custom-button',
+                content: 'Custom',
+                onClick: function() {
+                    alert('Hello from custom button');
+                }
+            },
+            'caption',
+            'fullscreen'
+        ],
+        size: {
+
+            width: '100%',
+
+            height: '100%'
+
+        },
+        loading_msg:'/images/photosphere-logo.gif',
+        time_anim:false,
+    });
+    viewer.on('panorama-load-progress',function () {//在加载全景图的过程中，将所有设备的标签加载进来
+        $.ajax({
+            type:"GET",
+            url:window.location.href.substr(0,location.href.indexOf('?'))+'/loadMarker',
+            success:function(data){
+                for(var i=0;i<data.length;i++)
+                {
+                    var device = {deviceId:data[i].deviceId,deviceName:data[i].deviceName,deviceType:data[i].deviceType,longitude:data[i].longitude,latitude:data[i].latitude,manufacture:data[i].manufacture,model:data[i].model,imageLoc1:data[i].imageLoc1,imageLoc2:data[i].imageLoc2,sceneId: data[i].sceneId,typeId:data[i].typeId}
+                    M.set(data[i].deviceId,device);
+                    if(data[i].sceneId==sceneId)
+                    {
+                        var info=device;
+                        $.ajax({
+                            type:"POST",
+                            url:window.location.href.substr(0,location.href.indexOf('?')) + '/checkStatus',
+                            data:info,
+                            dataType:'json',
+                            success:function(result){
+                                if(result.value==='true')
+                                {
+                                    viewer.addMarker({
+                                        id:M.get(result.deviceId).deviceId,
+                                        longitude:M.get(result.deviceId).longitude,
+                                        latitude:M.get(result.deviceId).latitude,
+                                        image:'/images/'+M.get(result.deviceId).imageLoc1,
+                                        width:50,
+                                        height:50,
+                                        anchor:'bottom center',
+                                        tooltip:{
+                                            content:M.get(result.deviceId).deviceName,
+                                            fontsize:'xx-large',
+                                        },
+                                    })
+                                }
+                                else
+                                {
+                                    viewer.addMarker({
+                                        id:M.get(result.deviceId).deviceId,
+                                        longitude:M.get(result.deviceId).longitude,
+                                        latitude:M.get(result.deviceId).latitude,
+                                        image:'/images/'+M.get(result.deviceId).imageLoc2,
+                                        width:50,
+                                        height:50,
+                                        anchor:'bottom center',
+                                        tooltip:{
+                                            content:M.get(result.deviceId).deviceName,
+                                            fontsize:'xx-large',
+                                        },
+                                    })
+                                }
+                            }
+                        })
+                    }
+                }
+            }
+        })
+        $.ajax({
+            type:"GET",
+            url:location.href.substr(0,location.href.indexOf('?'))+'/loadMoveMarker',
+            success:function(data){
+                for(var i=0;i<data.length;i++)
+                {
+                    if(data[i].sceneId==sceneId.toString())
+                    {
+                        viewer.addMarker({
+                            id:data[i].markerId,
+                            longitude:data[i].longitude,
+                            latitude:data[i].latitude,
+                            width:35,
+                            height:35,
+                            image:'/images/arrow.gif',
+                            tooltip:{
+                                content:'前往此处',
+                                fontsize:'xx-large',
+                            },
+                        })
+                    }
+                }
+            }
+        })
+    });
+    viewer.on('click',function(e){//再点击的位置添加设备
+        if(addMode)
+        {
+            $('#addDeviceModal').modal('toggle')
+            $('#name1').val(e.longitude);
+            $('#name2').val(e.latitude);
+        }
+        else if(addFMode)
+        {
+            sceneId2 = Date.now();
+            window.location.href = location.href.substr(0,location.href.indexOf('/users'))+'/upload?sceneId1='+sceneId.toString()+'&sceneId2='+sceneId2.toString()+'&longitude='+e.longitude+'&latitude='+e.latitude;
+            addFMode=false;
+        }
+        else if(addBMode)
+        {
+            sceneId2 = GetQueryString("sceneId2");
+            sceneId2 = decodeURIComponent(sceneId2);
+            var params = {sceneId1:sceneId,sceneId2:sceneId2,longitude:e.longitude,latitude:e.latitude};
+            $.ajax({
+                type:"POST",
+                url:location.href.substr(0,location.href.indexOf('/users'))+'/upload/addMarker',
+                data:params,
+                datatype:'json',
+                success:function(data){
+                    if(data.result=="fail"){
+                        alert("设备删除失败！");
+                    }
+                    else
+                    {
+                        alert("后退标记添加成功！");
+                        $.ajax({
+                            type:"GET",
+                            url:location.href.substr(0,location.href.indexOf('?'))+'/loadMoveMarker',
+                            success:function(data){
+                                for(var i=0;i<data.length;i++)
+                                {
+                                    if(data[i].sceneId==sceneId.toString())
+                                    {
+                                        viewer.addMarker({
+                                            id:data[i].markerId,
+                                            longitude:data[i].longitude,
+                                            latitude:data[i].latitude,
+                                            width:35,
+                                            height:35,
+                                            image:'/images/arrow.gif',
+                                            tooltip:{
+                                                content:'前往此处',
+                                                fontsize:'xx-large',
+                                            },
+                                        })
+                                    }
+                                }
+                            }
+                        })
+                    }
+                }
+            })
+            addBMode=false;
+        }
+    });
+    //判断当前选中的是哪个物联网设备
+    viewer.on('select-marker',function(marker){
+        if(deleteMode)//如果当前处于设备删除模式
+        {
+            params = {deviceId:marker.id}
+            $.ajax({
+                type:"POST",
+                url:window.location.href.substr(0,location.href.indexOf('?'))+'/deleteDevice',
+                data:params,
+                dataType:'json',
+                success:function(data)
+                {
+                    if(data.result=="fail"){
+                        alert("设备删除失败！");
+                    }
+                    else
+                    {
+                        alert("设备删除成功！");
+                    }
+                }
+            })
+            viewer.removeMarker(marker);
+            //alert("设备已经成功删除！");
+            deleteMode=false;
+        }
+        else//如果当前不在设备删除模式
+        {
+            var S1;
+            var S2;
+            S1 = marker.id.substr(0,marker.id.indexOf('To'));
+            S2 = marker.id.substr(marker.id.indexOf('To')+2,marker.id.length-1);
+            //alert(S1+','+S2);
+            if(S1!=""&&S2!="")
+            {
+                sceneId2=sceneId;
+                sceneId=S2;
+                params={sceneId:sceneId};
+                $.ajax({
+                    type:"POST",
+                    url:location.href.substr(0,location.href.indexOf('?'))+'/getImg',
+                    data:params,
+                    datatype:"json",
+                    success:function(data){
+                        img_url = data;
+                        viewer.clearPanoramaCache();//先清空全景图的缓存
+                        viewer.setPanorama('/images/'+img_url);
+                        viewer.clearMarkers();//移调之前的标记
+                    }
+                })
+            }
+            else
+            {
+                var params=M.get(marker.id);
+                show(params.deviceId,params.deviceName,params.typeId,params.deviceType,params.manufacture,params.model);
+            }
+        }
+    });
+    viewer.on('select-marker',function(marker){//点击标签后的逐渐聚焦效果
+        viewer.gotoMarker(marker,1000);
+    });
+</script>
+</body>
+</html>
